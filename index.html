@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inwent V1</title>
+<style>
+    body {
+        background-color: black;
+        color: white;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .tabs {
+        display: flex;
+        background-color: #111;
+        border-bottom: 1px solid #444;
+    }
+    .tab {
+        padding: 10px 20px;
+        cursor: pointer;
+        border-right: 1px solid #444;
+    }
+    .tab.active {
+        background-color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    th, td {
+        border: 1px solid #555;
+        padding: 8px;
+        text-align: left;
+    }
+    input[type="text"], input[type="number"] {
+        width: 100%;
+        box-sizing: border-box;
+        background-color: #222;
+        color: white;
+        border: 1px solid #555;
+        padding: 4px;
+    }
+    button {
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+    .bottom-tabs {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        display: flex;
+    }
+    .bottom-tabs button {
+        margin: 5px;
+    }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+    <div class="tab active" onclick="showTab('Woliery')">Woliery</div>
+    <div class="tab" onclick="showTab('Szpaki')">Szpaki</div>
+    <div class="tab" onclick="showTab('Ścinki')">Ścinki</div>
+</div>
+
+<div class="bottom-tabs">
+    <button onclick="showTab('Maty')">Maty</button>
+    <button onclick="showTab('Osłony')">Osłony</button>
+</div>
+
+<div style="padding: 10px;">
+    <button onclick="addRow()">Dodaj pozycję</button>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>Nazwa</th>
+                <th>Kolor</th>
+                <th>Ilość</th>
+                <th>Uwagi</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<script>
+let currentTab = 'Woliery';
+let data = JSON.parse(localStorage.getItem('inwentData')) || {
+    'Woliery': [], 'Szpaki': [], 'Ścinki': [], 'Maty': [], 'Osłony': []
+};
+
+function saveData() {
+    localStorage.setItem('inwentData', JSON.stringify(data));
+}
+
+function showTab(tabName) {
+    currentTab = tabName;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => {if(t.textContent===tabName) t.classList.add('active')});
+    renderTable();
+}
+
+function renderTable() {
+    const tbody = document.querySelector('#dataTable tbody');
+    tbody.innerHTML = '';
+    data[currentTab].forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" value="${row.name}" onchange="updateCell(${index}, 'name', this.value)"></td>
+            <td><input type="text" value="${row.color}" onchange="updateCell(${index}, 'color', this.value)"></td>
+            <td>
+                <button onclick="changeQuantity(${index}, -0.1)">-</button>
+                <input type="number" step="0.1" value="${row.quantity}" onchange="updateCell(${index}, 'quantity', parseFloat(this.value))">
+                <button onclick="changeQuantity(${index}, 0.1)">+</button>
+            </td>
+            <td><input type="text" value="${row.notes}" onchange="updateCell(${index}, 'notes', this.value)"></td>
+            <td><button onclick="deleteRow(${index})">Usuń</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function addRow() {
+    data[currentTab].push({name:'', color:'', quantity:0, notes:''});
+    saveData();
+    renderTable();
+}
+
+function deleteRow(index) {
+    data[currentTab].splice(index,1);
+    saveData();
+    renderTable();
+}
+
+function updateCell(index, field, value) {
+    data[currentTab][index][field] = value;
+    saveData();
+}
+
+function changeQuantity(index, delta) {
+    let val = parseFloat(data[currentTab][index].quantity) + delta;
+    data[currentTab][index].quantity = Math.round(val*10)/10;
+    saveData();
+    renderTable();
+}
+
+// Inicjalizacja
+renderTable();
+</script>
+
+</body>
+</html>
